@@ -1,15 +1,24 @@
 @echo off 
-REM GroupType's A&E=EM	IP=APC	OP=NAC
+:: GroupType's A&E=EM	IP=APC	OP=NAC
 set GroupType=%1
 set GroupYear=%2
-set Populate=_%3
-if %Populate%==_1 call:PopulateInput
-call:hrggroup
+set Populate=[%3]
+if %Populate%==[1] call:PopulateInput
+if %GroupYear% LSS 1314 call:hrggroupold
+if not %GroupYear% LSS 1314 call:hrggroup
 call:GrouperLaunch
 
 goto:eof
 :PopulateInput
 bcp "SELECT * FROM [nhs_CDS_access].[dbo].[PbR_%GroupType%_Grouper_Input]" queryout "%~dp0Inputs\%GroupType%_HRG_Input.csv"  -c -t "," -T -S BIDEV1
+
+goto:eof
+:hrggroupold
+for /F "tokens=1,2 delims==" %%i in ('GroupLookup.bat') do (
+if %%i EQU %GroupYear%%GroupType%Logic set Logic=%%j
+if %%i EQU %GroupYear%Grouper set Grouper=%%j
+if %%i EQU %GroupYear%Definition set Definition=%%j
+) 
 
 goto:eof
 :hrggroup
